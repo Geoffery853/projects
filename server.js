@@ -1,6 +1,6 @@
 const express = require('express');
 const mongoose = require('mongoose');
-const Task = require('./models/Task');
+const taskRoutes = require('./routes/taskRoutes');
 
 const app = express();
 
@@ -8,26 +8,14 @@ const app = express();
 app.use(express.json());
 
 // MongoDB Connection
-mongoose.connect('mongodb://localhost:27017/taskmanager')
+mongoose.connect('mongodb://localhost:27017/taskdb')
   .then(() => console.log('MongoDB Connected'))
   .catch(err => console.log(err));
 
 // Test Route
-app.get('/', (req, res) => {
-  res.send('Server is running');
-});
+app.use("/tasks", taskRoutes);
 
-// POST API to create task
-app.post('/tasks', async (req, res) => {
-  try {
-    const task = new Task(req.body);
-    const savedTask = await task.save();
-    res.status(201).json(savedTask);
-  } catch (error) {
-    res.status(400).json({ error: error.message });
-  }
-});
-
+// Server
 app.listen(5000, () => {
   console.log('Server running on port 5000');
 });
