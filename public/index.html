@@ -43,13 +43,42 @@
 
   <ul id="taskList"></ul>
 
+  <h2>Login</h2>
+  <input type="email" id="email" placeholder="Email">
+  <input type="password" id="password" placeholder="Password">
+  <button onclick="login()">Login</button>
+
 <script>
 const API_URL = "http://localhost:5000/tasks";
 
 let currentFilter = "all";
+let token = "";
+
+async function login() {
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+
+  const res = await fetch("http://localhost:5000/auth/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password })
+  });
+
+  const data = await res.json();
+
+  localStorage.setItem("token", data.token);
+  alert("Logged in!");
+}
 
 async function fetchTasks() {
-  const res = await fetch(API_URL);
+  const token = localStorage.getItem("token");
+
+  const res = await fetch(API_URL, {
+    headers: {
+      "Authorization": token
+    }
+  });
+
   const tasks = await res.json();
 
   let filteredTasks = tasks;
@@ -88,13 +117,15 @@ async function fetchTasks() {
 async function addTask() {
   const title = document.getElementById("title").value;
   const priority = document.getElementById("priority").value;
+  const token = localStorage.getItem("token");
 
   if (!title) return alert("Enter task title");
 
   await fetch(API_URL, {
     method: "POST",
     headers: {
-      "Content-Type": "application/json"
+      "Content-Type": "application/json",
+      "Authorization": token
     },
     body: JSON.stringify({ title, priority })
   });
@@ -103,17 +134,25 @@ async function addTask() {
 }
 
 async function deleteTask(id) {
+  const token = localStorage.getItem("token");
+
   await fetch(`${API_URL}/${id}`, {
-    method: "DELETE"
+    method: "DELETE",
+    headers: {
+      "Authorization": token
+    }
   });
   fetchTasks();
 }
 
 async function toggleTask(id, currentStatus) {
+  const token = localStorage.getItem("token");
+
   await fetch(`${API_URL}/${id}`, {
     method: "PUT",
     headers: {
-      "Content-Type": "application/json"
+      "Content-Type": "application/json",
+      "Authorization": token
     },
     body: JSON.stringify({ completed: !currentStatus })
   });
@@ -121,6 +160,8 @@ async function toggleTask(id, currentStatus) {
 }
 
 async function editTask(id, oldTitle, oldPriority) {
+  const token = localStorage.getItem("token");
+
   const newTitle = prompt("Edit title:", oldTitle);
   if (!newTitle) return;
 
@@ -128,7 +169,10 @@ async function editTask(id, oldTitle, oldPriority) {
 
   await fetch(`${API_URL}/${id}`, {
     method: "PUT",
-    headers: { "Content-Type": "application/json" },
+    headers: { 
+      "Content-Type": "application/json",
+      "Authorization": token
+    },
     body: JSON.stringify({ title: newTitle, priority: newPriority })
   });
 
@@ -140,7 +184,9 @@ function setFilter(filter) {
   fetchTasks();
 }
 
-fetchTasks();
+if (localStorage.getItem("token")) {
+  fetchTasks();
+}
 </script>
 
 </body>
